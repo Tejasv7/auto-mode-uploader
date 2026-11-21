@@ -1,20 +1,34 @@
-name: ⚡ Instant Video Analyzer & Uploader
+name: 🎬 Input YouTube Video Link (AI Long-to-Shorts)
 
 on:
   workflow_dispatch:
     inputs:
       youtube_url:
-        description: 'YouTube Video URL to analyze (Optional - leave empty to upload next queued clip)'
-        required: false
-        default: ''
+        description: '🔗 Paste YouTube Video URL (e.g. https://www.youtube.com/watch?v=...)'
+        required: true
         type: string
       clips:
-        description: 'Number of clips to extract (Default: 8)'
-        required: false
+        description: '🎯 Number of Clips to Extract'
+        required: true
         default: '8'
-        type: string
+        type: choice
+        options:
+          - '4'
+          - '8'
+          - '12'
+          - '16'
+          - '24'
+      upload_action:
+        description: '⚡ Upload Action'
+        required: true
+        default: 'queue_and_upload_first'
+        type: choice
+        options:
+          - 'queue_and_upload_first'
+          - 'queue_only'
+          - 'upload_all_now'
       privacy:
-        description: 'Upload Privacy'
+        description: '🔒 YouTube Privacy'
         required: true
         default: 'public'
         type: choice
@@ -23,15 +37,20 @@ on:
           - unlisted
           - private
 
+permissions:
+  contents: write
+
 jobs:
-  manual_run:
-    name: Run Manual Task
+  process_video:
+    name: Analyze & Clip Video
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 45
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
@@ -39,7 +58,7 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
 
-      - name: Install FFmpeg & System Fonts
+      - name: Install FFmpeg & Fonts
         run: |
           sudo apt-get update -y
           sudo apt-get install -y ffmpeg fonts-liberation fonts-dejavu-core
@@ -49,12 +68,38 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Execute Pipeline
+      - name: Setup Credentials & Environment from GitHub Secrets
         run: |
-          if [ -n "${{ github.event.inputs.youtube_url }}" ]; then
-            echo ">>> Analyzing YouTube Video and Extracting Clips..."
-            python main.py --url "${{ github.event.inputs.youtube_url }}" --clips ${{ github.event.inputs.clips }} --upload --privacy ${{ github.event.inputs.privacy }}
-          else
-            echo ">>> Uploading next pending clip from queue..."
-            python main.py --upload-next --privacy ${{ github.event.inputs.privacy }}
+          mkdir -p config
+          if [ -n "${{ secrets.YOUTUBE_CLIENT_SECRETS }}" ]; then
+            echo '${{ secrets.YOUTUBE_CLIENT_SECRETS }}' > config/client_secrets.json
           fi
+          if [ -n "${{ secrets.YOUTUBE_TOKEN }}" ]; then
+            echo '${{ secrets.YOUTUBE_TOKEN }}' > config/token.json
+          fi
+          echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > .env
+          echo "ENABLE_ANTI_COPYRIGHT=true" >> .env
+          echo "SPEED_MULTIPLIER=1.04" >> .env
+          echo "COLOR_BOOST=true" >> .env
+          echo "AUTO_DELETE_AFTER_UPLOAD=true" >> .env
+
+      - name: Run AI Video Analyzer & Clipper
+        run: |
+          echo ">>> Processing YouTube URL: ${{ github.event.inputs.youtube_url }}"
+          
+          if [ "${{ github.event.inputs.upload_action }}" = "queue_and_upload_first" ]; then
+            python main.py --url "${{ github.event.inputs.youtube_url }}" --clips ${{ github.event.inputs.clips }} --upload --privacy ${{ github.event.inputs.privacy }}
+          elif [ "${{ github.event.inputs.upload_action }}" = "upload_all_now" ]; then
+            python main.py --url "${{ github.event.inputs.youtube_url }}" --clips ${{ github.event.inputs.clips }} --upload-all --privacy ${{ github.event.inputs.privacy }}
+          else
+            python main.py --url "${{ github.event.inputs.youtube_url }}" --clips ${{ github.event.inputs.clips }} --privacy ${{ github.event.inputs.privacy }}
+          fi
+
+      - name: Sync & Commit Queue Updates back to GitHub
+        if: always()
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add clip_queue.json history.json || true
+          git commit -m "chore(queue): updated clips queue from cloud runner [skip ci]" || echo "No queue changes to commit"
+          git push origin main || echo "Nothing to push"

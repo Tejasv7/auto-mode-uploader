@@ -201,6 +201,7 @@ if __name__ == "__main__":
     parser.add_argument("--url", type=str, help="YouTube video URL to analyze and extract clips from")
     parser.add_argument("--clips", type=int, default=8, help="Number of viral clips to extract (Default: 8)")
     parser.add_argument("--upload", action="store_true", help="Instantly upload first clip after processing")
+    parser.add_argument("--upload-all", action="store_true", help="Upload all clips in queue immediately")
     parser.add_argument("--upload-next", action="store_true", help="Upload the next pending clip from the queue")
     parser.add_argument("--privacy", type=str, default="public", choices=["public", "unlisted", "private"])
     parser.add_argument("--queue-status", action="store_true", help="Show current queue statistics")
@@ -225,6 +226,17 @@ if __name__ == "__main__":
 
     if args.upload_next:
         upload_next_from_queue(privacy=args.privacy)
+        sys.exit(0)
+
+    if args.upload_all:
+        q = QueueManager()
+        pending = q.get_pending_clips()
+        print(f"\n[*] Uploading all {len(pending)} pending clips from queue...")
+        for c in pending:
+            try:
+                render_and_upload_clip(c["id"], privacy=args.privacy)
+            except Exception as e:
+                print(f"  [!] Failed to upload clip {c['id']}: {e}")
         sys.exit(0)
 
     if args.url:

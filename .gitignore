@@ -6,11 +6,7 @@ generated/
 logs/*.log
 .system_generated/
 
-# Credentials & Sensitive Config
+# Credentials & Sensitive Config (NEVER COMMIT)
 .env
 config/client_secrets.json
 config/token.json
-
-# Local Queue & Database
-clip_queue.json
-history.json
