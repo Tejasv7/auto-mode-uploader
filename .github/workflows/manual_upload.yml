@@ -8,14 +8,17 @@ on:
         required: true
         type: string
       clips:
-        description: '🎯 Number of Clips to Extract'
+        description: '🎯 Number of Clips (Choose "auto" for ALL clips across the whole video)'
         required: true
-        default: '8'
+        default: 'auto (Extract ALL Best Clips - 100 to 300+)'
         type: choice
         options:
-          - '4'
+          - 'auto (Extract ALL Best Clips - 100 to 300+)'
+          - '50'
+          - '100'
+          - '200'
+          - '300'
           - '8'
-          - '12'
           - '16'
           - '24'
       upload_action:
@@ -44,7 +47,7 @@ jobs:
   process_video:
     name: Analyze & Clip Video
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
 
     steps:
       - name: Checkout Code
@@ -85,14 +88,19 @@ jobs:
 
       - name: Run AI Video Analyzer & Clipper
         run: |
+          # Extract first word from clips choice (e.g. 'auto' or '100')
+          CLIPS_RAW="${{ github.event.inputs.clips }}"
+          CLIPS_CHOICE=$(echo "$CLIPS_RAW" | awk '{print $1}')
+          
           echo ">>> Processing YouTube URL: ${{ github.event.inputs.youtube_url }}"
+          echo ">>> Clips Strategy: $CLIPS_CHOICE"
           
           if [ "${{ github.event.inputs.upload_action }}" = "queue_and_upload_first" ]; then
-            python main.py --url "${{ github.event.inputs.youtube_url }}" --clips ${{ github.event.inputs.clips }} --upload --privacy ${{ github.event.inputs.privacy }}
+            python main.py --url "${{ github.event.inputs.youtube_url }}" --clips "$CLIPS_CHOICE" --upload --privacy ${{ github.event.inputs.privacy }}
           elif [ "${{ github.event.inputs.upload_action }}" = "upload_all_now" ]; then
-            python main.py --url "${{ github.event.inputs.youtube_url }}" --clips ${{ github.event.inputs.clips }} --upload-all --privacy ${{ github.event.inputs.privacy }}
+            python main.py --url "${{ github.event.inputs.youtube_url }}" --clips "$CLIPS_CHOICE" --upload-all --privacy ${{ github.event.inputs.privacy }}
           else
-            python main.py --url "${{ github.event.inputs.youtube_url }}" --clips ${{ github.event.inputs.clips }} --privacy ${{ github.event.inputs.privacy }}
+            python main.py --url "${{ github.event.inputs.youtube_url }}" --clips "$CLIPS_CHOICE" --privacy ${{ github.event.inputs.privacy }}
           fi
 
       - name: Sync & Commit Queue Updates back to GitHub

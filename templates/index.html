@@ -137,11 +137,14 @@
                         <div>
                             <label class="block text-xs font-semibold text-slate-300 mb-1.5">Clips to Extract</label>
                             <select id="max-clips-select" class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                                <option value="4">4 Best Clips</option>
-                                <option value="8" selected>8 Best Clips (Full 24h Supply)</option>
-                                <option value="12">12 Best Clips</option>
-                                <option value="16">16 Best Clips (2 Days Supply)</option>
-                                <option value="24">24 Best Clips</option>
+                                <option value="auto" selected>🚀 Auto: ALL Best Clips (Full 4h Scan - 100 to 300+ Clips)</option>
+                                <option value="50">50 Best Clips</option>
+                                <option value="100">100 Best Clips</option>
+                                <option value="200">200 Best Clips</option>
+                                <option value="300">300 Best Clips</option>
+                                <option value="8">8 Clips (1 Day Supply)</option>
+                                <option value="16">16 Clips (2 Days Supply)</option>
+                                <option value="24">24 Clips (3 Days Supply)</option>
                             </select>
                         </div>
 
@@ -347,7 +350,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         url: url,
-                        max_clips: parseInt(maxClips),
+                        max_clips: isNaN(parseInt(maxClips)) ? "auto" : parseInt(maxClips),
                         privacy: privacy,
                         upload_first: uploadFirst
                     })

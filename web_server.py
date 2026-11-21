@@ -149,7 +149,8 @@ def analyze_video():
     if not url:
         return jsonify({"status": "error", "message": "YouTube URL is required!"}), 400
 
-    max_clips = int(data.get("max_clips", 8))
+    raw_clips = data.get("max_clips", "auto")
+    max_clips = int(raw_clips) if str(raw_clips).isdigit() else "auto"
     upload_first = bool(data.get("upload_first", False))
     privacy = data.get("privacy", "public")
 

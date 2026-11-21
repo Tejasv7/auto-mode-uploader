@@ -14,6 +14,8 @@ from youtube_uploader import YouTubeUploader
 from history_manager import add_history_entry
 from config.settings import FINAL_VIDEOS_DIR, GENERATED_DIR, AUTO_DELETE_AFTER_UPLOAD
 
+from typing import Union
+
 # Configure Logging
 logging.basicConfig(
     level=logging.INFO,
@@ -23,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 def process_youtube_video(
     youtube_url: str,
-    max_clips: int = 8,
+    max_clips: Union[int, str] = "auto",
     upload_first: bool = False,
     privacy: str = "public"
 ) -> dict:
@@ -199,7 +201,7 @@ def upload_next_from_queue(privacy: str = "public") -> dict:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="AI YouTube Shorts Auto-Clipper & Uploader")
     parser.add_argument("--url", type=str, help="YouTube video URL to analyze and extract clips from")
-    parser.add_argument("--clips", type=int, default=8, help="Number of viral clips to extract (Default: 8)")
+    parser.add_argument("--clips", type=str, default="auto", help="Number of viral clips to extract (Default: 'auto' - Extracts all best clips from video, or specify '50', '100', '200', etc.)")
     parser.add_argument("--upload", action="store_true", help="Instantly upload first clip after processing")
     parser.add_argument("--upload-all", action="store_true", help="Upload all clips in queue immediately")
     parser.add_argument("--upload-next", action="store_true", help="Upload the next pending clip from the queue")
