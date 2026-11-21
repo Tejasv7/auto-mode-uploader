@@ -16,7 +16,9 @@ class VideoEditor:
     Renders video clips into high-engagement vertical YouTube Shorts (9:16 - 1080x1920) with:
     1. Anti-Copyright Bypass Filters (1.03x-1.05x audio/video speed shift, color grading, pitch shift, metadata strip)
     2. Ambient blurred background framing (1080x1920)
-    3. Clean 2-line viral hook overlay (Line 1: Scene Hook, Line 2: WAIT FOR THE END!)
+    3. High-Contrast 2-Line Viral Hook Overlay:
+       Line 1: Scene Hook (Bold White)
+       Line 2: 'WAIT FOR THE END!' (Vibrant Golden Yellow)
     """
     def __init__(self, ffmpeg_path: str = FFMPEG_PATH, width: int = VIDEO_WIDTH, height: int = VIDEO_HEIGHT):
         self.ffmpeg_path = ffmpeg_path
@@ -25,12 +27,13 @@ class VideoEditor:
 
     def create_banner_overlay(self, hook: tuple, output_path: Path) -> Path:
         """
-        Generates a 2-line transparent overlay with BOLD viral text:
-        Line 1: Main Hook (Bold White with Black Outline)
-        Line 2: Sub-Hook (Bright Yellow with Black Outline - Always 'WAIT FOR THE END!')
+        Generates a 2-line high-contrast viral banner overlay:
+        - Semi-transparent dark pill container (ensures 100% readability over bright gameplay)
+        - Line 1: Main Hook (Bold White with outline)
+        - Line 2: 'WAIT FOR THE END!' (Vibrant Golden Yellow with outline)
         """
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        img = Image.new("RGBA", (self.width, 280), (0, 0, 0, 0))
+        img = Image.new("RGBA", (self.width, 270), (0, 0, 0, 0))
         draw = ImageDraw.Draw(img)
 
         # Cross-platform bold font loading
@@ -49,8 +52,8 @@ class VideoEditor:
 
         if font_path:
             try:
-                font_l1 = ImageFont.truetype(font_path, 68)
-                font_l2 = ImageFont.truetype(font_path, 56)
+                font_l1 = ImageFont.truetype(font_path, 64)
+                font_l2 = ImageFont.truetype(font_path, 54)
             except Exception:
                 font_l1 = ImageFont.load_default()
                 font_l2 = ImageFont.load_default()
@@ -59,26 +62,35 @@ class VideoEditor:
             font_l2 = ImageFont.load_default()
 
         if isinstance(hook, (tuple, list)):
-            line1 = str(hook[0]).upper()
-            line2 = str(hook[1]).upper() if len(hook) > 1 and hook[1] else "WAIT FOR THE END!"
+            line1 = str(hook[0]).strip().upper() if hook[0] else "VIRAL MOMENT"
+            line2 = str(hook[1]).strip().upper() if len(hook) > 1 and hook[1] else "WAIT FOR THE END!"
         else:
-            line1 = str(hook).upper() if hook else "VIRAL MOMENT"
+            line1 = str(hook).strip().upper() if hook else "VIRAL MOMENT"
             line2 = "WAIT FOR THE END!"
 
-        # Line 1: Main Title / Hook
+        # Stylish Dark Glass Box container (Guarantees text pops on any gameplay/video background)
+        draw.rounded_rectangle(
+            [(30, 15), (self.width - 30, 245)],
+            radius=22,
+            fill=(0, 0, 0, 190),
+            outline=(255, 255, 255, 35),
+            width=2
+        )
+
+        # Line 1: Main Title / Hook (White)
         draw.text(
-            (self.width // 2, 70),
+            (self.width // 2, 75),
             line1,
             font=font_l1,
             fill=(255, 255, 255, 255),
-            stroke_width=7,
+            stroke_width=6,
             stroke_fill=(0, 0, 0, 255),
             anchor="mm"
         )
 
-        # Line 2: Hook (Bright Yellow)
+        # Line 2: Hook (Vibrant Yellow - ALWAYS 'WAIT FOR THE END!')
         draw.text(
-            (self.width // 2, 165),
+            (self.width // 2, 170),
             line2,
             font=font_l2,
             fill=(255, 215, 0, 255),
@@ -97,7 +109,7 @@ class VideoEditor:
         - 1.04x speed shift (video & audio)
         - Color curve, brightness & contrast booster
         - Ambient blurred background
-        - Transformative 2-line bold hook overlay
+        - High-contrast 2-line bold hook overlay
         - Sanitized metadata (strips Content ID tags)
         """
         output_clip.parent.mkdir(parents=True, exist_ok=True)
@@ -112,12 +124,13 @@ class VideoEditor:
         fg_scaled_w = int(self.width * 1.04)
 
         # Robust multi-aspect ratio filter graph with even dimension protection
+        # Places hook banner comfortably at y=100 from top (perfect for Shorts UI)
         filter_str = (
             f"[0:v]scale={self.width}:{self.height}:force_original_aspect_ratio=increase,"
             f"crop={self.width}:{self.height},boxblur=25:5,{color_filter}format=yuv420p[bg];"
             f"[0:v]scale={fg_scaled_w}:-2,crop={self.width}:min(ih\\,{self.height}),{color_filter}format=yuv420p[fg];"
             f"[bg][fg]overlay=(W-w)/2:(H-h)/2[merged];"
-            f"[merged][1:v]overlay=0:60,"
+            f"[merged][1:v]overlay=0:100,"
             f"setpts={setpts_val}*PTS[v];"
             f"[0:a]asetrate=44100*{speed},aresample=44100,aformat=channel_layouts=stereo[a]"
         )

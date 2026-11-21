@@ -27,7 +27,8 @@ def process_youtube_video(
     youtube_url: str,
     max_clips: Union[int, str] = "auto",
     upload_first: bool = False,
-    privacy: str = "public"
+    privacy: str = "public",
+    custom_hook: str = None
 ) -> dict:
     """
     Complete Pipeline for Long YouTube Videos:
@@ -66,6 +67,14 @@ def process_youtube_video(
     # Step 3: Analyze Highlights with Gemini AI
     print(f"\n>>> [STEP 3/3] Gemini AI Analyzing Best Action/Comedy Scenes (Target: {max_clips} Clips)...")
     clips = analyzer.analyze_and_extract_clips(info, transcript=transcript, max_clips=max_clips)
+    
+    # Apply custom hook if provided (Line 2 is always 'WAIT FOR THE END!')
+    if custom_hook and custom_hook.strip():
+        forced_hook = [custom_hook.strip().upper(), "WAIT FOR THE END!"]
+        for c in clips:
+            c["hook"] = forced_hook
+        print(f"  [+] Applied Custom Hook: Line 1: '{forced_hook[0]}' | Line 2: '{forced_hook[1]}'")
+
     print(f"  [+] Successfully identified {len(clips)} viral highlight moments!")
 
     # Add all detected clips to persistent queue
@@ -202,6 +211,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="AI YouTube Shorts Auto-Clipper & Uploader")
     parser.add_argument("--url", type=str, help="YouTube video URL to analyze and extract clips from")
     parser.add_argument("--clips", type=str, default="auto", help="Number of viral clips to extract (Default: 'auto' - Extracts all best clips from video, or specify '50', '100', '200', etc.)")
+    parser.add_argument("--hook", type=str, default="", help="Custom hook for Line 1 (Line 2 is always 'WAIT FOR THE END!')")
     parser.add_argument("--upload", action="store_true", help="Instantly upload first clip after processing")
     parser.add_argument("--upload-all", action="store_true", help="Upload all clips in queue immediately")
     parser.add_argument("--upload-next", action="store_true", help="Upload the next pending clip from the queue")
@@ -246,7 +256,8 @@ if __name__ == "__main__":
             youtube_url=args.url,
             max_clips=args.clips,
             upload_first=args.upload,
-            privacy=args.privacy
+            privacy=args.privacy,
+            custom_hook=args.hook
         )
     else:
         parser.print_help()

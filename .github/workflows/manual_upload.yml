@@ -21,6 +21,11 @@ on:
           - '8'
           - '16'
           - '24'
+      custom_hook:
+        description: '💡 Custom Hook (Line 1 text. Line 2 is ALWAYS "WAIT FOR THE END!"). Leave blank for AI auto-hooks.'
+        required: false
+        default: ''
+        type: string
       upload_action:
         description: '⚡ Upload Action'
         required: true
@@ -88,19 +93,22 @@ jobs:
 
       - name: Run AI Video Analyzer & Clipper
         run: |
-          # Extract first word from clips choice (e.g. 'auto' or '100')
           CLIPS_RAW="${{ github.event.inputs.clips }}"
           CLIPS_CHOICE=$(echo "$CLIPS_RAW" | awk '{print $1}')
+          HOOK_ARG=""
+          if [ -n "${{ github.event.inputs.custom_hook }}" ]; then
+            HOOK_ARG="--hook \"${{ github.event.inputs.custom_hook }}\""
+          fi
           
           echo ">>> Processing YouTube URL: ${{ github.event.inputs.youtube_url }}"
           echo ">>> Clips Strategy: $CLIPS_CHOICE"
           
           if [ "${{ github.event.inputs.upload_action }}" = "queue_and_upload_first" ]; then
-            python main.py --url "${{ github.event.inputs.youtube_url }}" --clips "$CLIPS_CHOICE" --upload --privacy ${{ github.event.inputs.privacy }}
+            python main.py --url "${{ github.event.inputs.youtube_url }}" --clips "$CLIPS_CHOICE" --upload --privacy ${{ github.event.inputs.privacy }} $HOOK_ARG
           elif [ "${{ github.event.inputs.upload_action }}" = "upload_all_now" ]; then
-            python main.py --url "${{ github.event.inputs.youtube_url }}" --clips "$CLIPS_CHOICE" --upload-all --privacy ${{ github.event.inputs.privacy }}
+            python main.py --url "${{ github.event.inputs.youtube_url }}" --clips "$CLIPS_CHOICE" --upload-all --privacy ${{ github.event.inputs.privacy }} $HOOK_ARG
           else
-            python main.py --url "${{ github.event.inputs.youtube_url }}" --clips "$CLIPS_CHOICE" --privacy ${{ github.event.inputs.privacy }}
+            python main.py --url "${{ github.event.inputs.youtube_url }}" --clips "$CLIPS_CHOICE" --privacy ${{ github.event.inputs.privacy }} $HOOK_ARG
           fi
 
       - name: Sync & Commit Queue Updates back to GitHub
