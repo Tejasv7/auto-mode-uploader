@@ -1,0 +1,60 @@
+name: ⚡ Instant Video Analyzer & Uploader
+
+on:
+  workflow_dispatch:
+    inputs:
+      youtube_url:
+        description: 'YouTube Video URL to analyze (Optional - leave empty to upload next queued clip)'
+        required: false
+        default: ''
+        type: string
+      clips:
+        description: 'Number of clips to extract (Default: 8)'
+        required: false
+        default: '8'
+        type: string
+      privacy:
+        description: 'Upload Privacy'
+        required: true
+        default: 'public'
+        type: choice
+        options:
+          - public
+          - unlisted
+          - private
+
+jobs:
+  manual_run:
+    name: Run Manual Task
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install FFmpeg & System Fonts
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y ffmpeg fonts-liberation fonts-dejavu-core
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Execute Pipeline
+        run: |
+          if [ -n "${{ github.event.inputs.youtube_url }}" ]; then
+            echo ">>> Analyzing YouTube Video and Extracting Clips..."
+            python main.py --url "${{ github.event.inputs.youtube_url }}" --clips ${{ github.event.inputs.clips }} --upload --privacy ${{ github.event.inputs.privacy }}
+          else
+            echo ">>> Uploading next pending clip from queue..."
+            python main.py --upload-next --privacy ${{ github.event.inputs.privacy }}
+          fi

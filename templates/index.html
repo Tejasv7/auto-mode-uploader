@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto-Mode Uploader | AI YouTube Shorts Studio</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                        },
+                        darkBg: '#090d16',
+                        cardBg: '#131b2e'
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome 6 Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #080c14;
+            color: #f1f5f9;
+        }
+        .code-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .glass-card {
+            background: rgba(19, 27, 46, 0.75);
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+        }
+        .terminal-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .terminal-scroll::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Top Navigation Bar -->
+    <header class="border-b border-slate-800/80 bg-slate-900/80 backdrop-blur-md sticky top-0 z-50 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                    <i class="fa-solid fa-wand-magic-sparkles text-white text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-indigo-400 bg-clip-text text-transparent">
+                        Auto-Mode Uploader
+                    </h1>
+                    <span class="text-xs text-indigo-400 font-semibold tracking-wider uppercase">AI YouTube Long-to-Shorts Engine</span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <!-- Status Badges -->
+                <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800/80 border border-slate-700 text-xs">
+                    <span id="yt-status-dot" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span class="text-slate-300 font-medium">YouTube API:</span>
+                    <span id="yt-status-text" class="text-emerald-400 font-bold">Ready</span>
+                </div>
+
+                <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800/80 border border-slate-700 text-xs">
+                    <span id="gemini-status-dot" class="w-2 h-2 rounded-full bg-indigo-400"></span>
+                    <span class="text-slate-300 font-medium">Gemini AI:</span>
+                    <span id="gemini-status-text" class="text-indigo-400 font-bold">Active</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-6">
+
+        <!-- Progress Banner (Shown during active background work) -->
+        <div id="active-job-banner" class="hidden glass-card rounded-2xl p-5 border-l-4 border-l-indigo-500 animate-pulse">
+            <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-circle-notch fa-spin text-indigo-400 text-lg"></i>
+                    <div>
+                        <h4 id="job-title" class="font-bold text-white text-sm">Processing Video...</h4>
+                        <p class="text-xs text-slate-400">Analyzing scenes and generating anti-copyright Shorts...</p>
+                    </div>
+                </div>
+                <span id="job-percent" class="text-xs font-bold text-indigo-400 code-font">0%</span>
+            </div>
+            <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                <div id="job-progress-bar" class="bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <!-- Section 1: YouTube URL Input Card -->
+        <div class="glass-card rounded-2xl p-6 sm:p-8 relative overflow-hidden">
+            <div class="absolute -right-16 -top-16 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div class="max-w-3xl space-y-4">
+                <div class="flex items-center gap-2 text-indigo-400 text-sm font-semibold uppercase tracking-wider">
+                    <i class="fa-brands fa-youtube text-red-500 text-base"></i>
+                    Input Video
+                </div>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                    Convert Any Long YouTube Video Into Viral Shorts
+                </h2>
+                <p class="text-slate-400 text-sm">
+                    Paste any YouTube video link (even 2–4 hours long). Our AI reads the chapters, dialogues, and high-energy moments, clips the funniest and best action scenes, applies Anti-Copyright protection, and queues them for automated upload every 3 hours!
+                </p>
+
+                <div class="space-y-4 pt-2">
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                            <i class="fa-solid fa-link"></i>
+                        </div>
+                        <input type="text" id="youtube-url-input" placeholder="Paste YouTube Video URL (e.g. https://www.youtube.com/watch?v=...)"
+                            class="w-full pl-11 pr-4 py-3.5 bg-slate-900/90 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all text-sm font-medium">
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1.5">Clips to Extract</label>
+                            <select id="max-clips-select" class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <option value="4">4 Best Clips</option>
+                                <option value="8" selected>8 Best Clips (Full 24h Supply)</option>
+                                <option value="12">12 Best Clips</option>
+                                <option value="16">16 Best Clips (2 Days Supply)</option>
+                                <option value="24">24 Best Clips</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1.5">Upload Privacy</label>
+                            <select id="privacy-select" class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <option value="public" selected>Public (Live)</option>
+                                <option value="unlisted">Unlisted</option>
+                                <option value="private">Private</option>
+                            </select>
+                        </div>
+
+                        <div class="flex items-center pt-5 sm:pt-6">
+                            <label class="flex items-center gap-2 cursor-pointer select-none">
+                                <input type="checkbox" id="upload-first-check" class="w-4 h-4 rounded bg-slate-800 border-slate-700 text-indigo-600 focus:ring-indigo-500">
+                                <span class="text-xs text-slate-300 font-medium">Upload 1st clip now</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <button id="btn-analyze" onclick="startAnalysis()"
+                        class="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-3 transition-all duration-200">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        Analyze Video & Extract Viral Clips
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 2: 24/7 Scheduler & Queue Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <!-- Scheduler Card -->
+            <div class="md:col-span-2 glass-card rounded-2xl p-5 flex flex-col justify-between space-y-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
+                            <i class="fa-solid fa-clock"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-white text-sm">24/7 Auto-Uploader</h3>
+                            <p class="text-xs text-slate-400">Every 3 Hours (8 Clips per 24h)</p>
+                        </div>
+                    </div>
+                    <span id="scheduler-badge" class="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                        ACTIVE
+                    </span>
+                </div>
+
+                <div class="bg-slate-900/60 rounded-xl p-3 border border-slate-800/80 flex items-center justify-between">
+                    <div>
+                        <span class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Next Scheduled Slot:</span>
+                        <div id="next-slot-time" class="text-sm font-bold text-white code-font">Loading...</div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="toggleScheduler()" id="btn-toggle-scheduler" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 border border-slate-700 transition">
+                            <i class="fa-solid fa-pause mr-1"></i> Pause
+                        </button>
+                        <button onclick="uploadNextNow()" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold text-white shadow transition">
+                            <i class="fa-solid fa-bolt mr-1"></i> Upload Next
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Overview -->
+            <div class="glass-card rounded-2xl p-5 flex flex-col justify-between">
+                <span class="text-xs uppercase tracking-wider text-slate-400 font-semibold">Queue Status</span>
+                <div class="flex items-baseline gap-2 my-1">
+                    <span id="stat-pending" class="text-3xl font-extrabold text-indigo-400">0</span>
+                    <span class="text-xs text-slate-400 font-medium">Clips Pending</span>
+                </div>
+                <div class="text-[11px] text-slate-500 flex justify-between">
+                    <span>Total Created: <b id="stat-total" class="text-slate-300">0</b></span>
+                    <span>Failed: <b id="stat-failed" class="text-red-400">0</b></span>
+                </div>
+            </div>
+
+            <div class="glass-card rounded-2xl p-5 flex flex-col justify-between">
+                <span class="text-xs uppercase tracking-wider text-slate-400 font-semibold">Completed Uploads</span>
+                <div class="flex items-baseline gap-2 my-1">
+                    <span id="stat-uploaded" class="text-3xl font-extrabold text-emerald-400">0</span>
+                    <span class="text-xs text-slate-400 font-medium">Shorts Uploaded</span>
+                </div>
+                <div class="text-[11px] text-slate-500">
+                    Auto-Storage Cleaner: <b class="text-emerald-400">Enabled</b>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 3: Tabs (Clips Queue | History | Console) -->
+        <div class="space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex gap-2">
+                    <button onclick="switchTab('queue')" id="tab-btn-queue" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-indigo-600 text-white transition">
+                        <i class="fa-solid fa-list-check mr-1.5"></i> Clips Queue (<span id="queue-count-badge">0</span>)
+                    </button>
+                    <button onclick="switchTab('history')" id="tab-btn-history" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-slate-800 text-slate-400 hover:text-white transition">
+                        <i class="fa-solid fa-clock-rotate-left mr-1.5"></i> Upload History
+                    </button>
+                    <button onclick="switchTab('logs')" id="tab-btn-logs" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-slate-800 text-slate-400 hover:text-white transition">
+                        <i class="fa-solid fa-terminal mr-1.5"></i> Activity Logs
+                    </button>
+                </div>
+
+                <button onclick="clearQueue()" class="text-xs text-slate-500 hover:text-red-400 transition font-medium">
+                    <i class="fa-solid fa-trash-can mr-1"></i> Clear Queue
+                </button>
+            </div>
+
+            <!-- Tab Content: Clips Queue -->
+            <div id="tab-content-queue" class="space-y-3">
+                <div id="queue-empty-msg" class="glass-card rounded-2xl p-12 text-center text-slate-500 space-y-2">
+                    <i class="fa-solid fa-film text-4xl text-slate-600 mb-2"></i>
+                    <h4 class="text-base font-bold text-slate-300">Your Clips Queue is Empty</h4>
+                    <p class="text-xs text-slate-500 max-w-md mx-auto">
+                        Paste a YouTube video URL above and click "Analyze Video & Extract Viral Clips" to populate your 24/7 upload queue.
+                    </p>
+                </div>
+                <div id="queue-cards-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Injected dynamically via JS -->
+                </div>
+            </div>
+
+            <!-- Tab Content: Upload History -->
+            <div id="tab-content-history" class="hidden glass-card rounded-2xl p-5">
+                <div id="history-empty-msg" class="py-8 text-center text-slate-500 text-xs">
+                    No videos uploaded yet in this session.
+                </div>
+                <div id="history-table-container" class="overflow-x-auto hidden">
+                    <table class="w-full text-left text-xs text-slate-300">
+                        <thead class="text-slate-400 border-b border-slate-800 uppercase tracking-wider font-semibold text-[11px]">
+                            <tr>
+                                <th class="py-3 px-4">Timestamp</th>
+                                <th class="py-3 px-4">Title</th>
+                                <th class="py-3 px-4">Hook</th>
+                                <th class="py-3 px-4">Link</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-table-body" class="divide-y divide-slate-800/60 font-medium">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab Content: Activity Logs Terminal -->
+            <div id="tab-content-logs" class="hidden glass-card rounded-2xl p-5 space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs uppercase tracking-wider text-slate-400 font-bold code-font">Live System Output</span>
+                    <span class="text-[11px] text-slate-500">Auto-refreshing</span>
+                </div>
+                <div id="terminal-box" class="h-80 overflow-y-auto bg-slate-950 p-4 rounded-xl code-font text-xs text-emerald-400 space-y-1 terminal-scroll border border-slate-800">
+                    <div>[*] Waiting for activities...</div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800/80 bg-slate-900/40 text-center py-4 text-xs text-slate-500">
+        Auto-Mode Uploader • AI-Powered 24/7 YouTube Automation Studio
+    </footer>
+
+    <!-- Client-side Logic Script -->
+    <script>
+        let currentTab = 'queue';
+
+        function switchTab(tab) {
+            currentTab = tab;
+            ['queue', 'history', 'logs'].forEach(t => {
+                const btn = document.getElementById(`tab-btn-${t}`);
+                const content = document.getElementById(`tab-content-${t}`);
+                if (t === tab) {
+                    btn.className = "px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-indigo-600 text-white transition";
+                    content.classList.remove('hidden');
+                } else {
+                    btn.className = "px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-slate-800 text-slate-400 hover:text-white transition";
+                    content.classList.add('hidden');
+                }
+            });
+            if (tab === 'history') refreshHistory();
+            if (tab === 'logs') refreshLogs();
+        }
+
+        async function startAnalysis() {
+            const urlInput = document.getElementById('youtube-url-input');
+            const url = urlInput.value.trim();
+            if (!url) {
+                alert("Please paste a valid YouTube URL first!");
+                return;
+            }
+            const maxClips = document.getElementById('max-clips-select').value;
+            const privacy = document.getElementById('privacy-select').value;
+            const uploadFirst = document.getElementById('upload-first-check').checked;
+
+            const btn = document.getElementById('btn-analyze');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Analyzing Video with Gemini AI...`;
+
+            try {
+                const res = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        url: url,
+                        max_clips: parseInt(maxClips),
+                        privacy: privacy,
+                        upload_first: uploadFirst
+                    })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    urlInput.value = '';
+                } else {
+                    alert(data.message || "Failed to start analysis");
+                }
+            } catch (err) {
+                alert("Error connecting to server: " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> Analyze Video & Extract Viral Clips`;
+            }
+        }
+
+        async function uploadNextNow() {
+            try {
+                const res = await fetch('/api/upload-next', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ privacy: document.getElementById('privacy-select').value })
+                });
+                const data = await res.json();
+                if (!res.ok) alert(data.message || "Upload request failed");
+            } catch (e) {
+                alert("Error: " + e.message);
+            }
+        }
+
+        async function uploadClip(clipId) {
+            try {
+                const res = await fetch(`/api/upload-clip/${clipId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ privacy: document.getElementById('privacy-select').value })
+                });
+                const data = await res.json();
+                if (!res.ok) alert(data.message || "Failed to upload clip");
+            } catch (e) {
+                alert("Error: " + e.message);
+            }
+        }
+
+        async function deleteClip(clipId) {
+            if (!confirm("Are you sure you want to remove this clip?")) return;
+            try {
+                await fetch(`/api/clip/${clipId}`, { method: 'DELETE' });
+                refreshQueue();
+            } catch (e) {
+                alert("Error: " + e.message);
+            }
+        }
+
+        async function clearQueue() {
+            if (!confirm("Are you sure you want to clear all queued clips?")) return;
+            try {
+                await fetch('/api/clear-queue', { method: 'POST' });
+                refreshQueue();
+            } catch (e) {
+                alert("Error: " + e.message);
+            }
+        }
+
+        async function toggleScheduler() {
+            try {
+                const res = await fetch('/api/scheduler/toggle', { method: 'POST' });
+                const data = await res.json();
+                const badge = document.getElementById('scheduler-badge');
+                const btn = document.getElementById('btn-toggle-scheduler');
+                if (data.active) {
+                    badge.className = "px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
+                    badge.textContent = "ACTIVE";
+                    btn.innerHTML = `<i class="fa-solid fa-pause mr-1"></i> Pause`;
+                } else {
+                    badge.className = "px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30";
+                    badge.textContent = "PAUSED";
+                    btn.innerHTML = `<i class="fa-solid fa-play mr-1"></i> Resume`;
+                }
+            } catch (e) {
+                alert("Error toggling scheduler: " + e.message);
+            }
+        }
+
+        async function refreshStatus() {
+            try {
+                const res = await fetch('/api/status');
+                const data = await res.json();
+
+                // Active job banner
+                const jobBanner = document.getElementById('active-job-banner');
+                if (data.job && data.job.is_running) {
+                    jobBanner.classList.remove('hidden');
+                    document.getElementById('job-title').textContent = data.job.task_name;
+                    document.getElementById('job-percent').textContent = `${data.job.progress}%`;
+                    document.getElementById('job-progress-bar').style.width = `${data.job.progress}%`;
+                } else {
+                    jobBanner.classList.add('hidden');
+                }
+
+                // Scheduler info
+                document.getElementById('next-slot-time').textContent = data.scheduler.next_run;
+
+                // Stats
+                document.getElementById('stat-total').textContent = data.stats.total;
+                document.getElementById('stat-pending').textContent = data.stats.pending;
+                document.getElementById('stat-uploaded').textContent = data.stats.uploaded;
+                document.getElementById('stat-failed').textContent = data.stats.failed;
+                document.getElementById('queue-count-badge').textContent = data.stats.pending;
+
+            } catch (e) {}
+        }
+
+        async function refreshQueue() {
+            try {
+                const res = await fetch('/api/queue');
+                const data = await res.json();
+                const clips = data.clips || [];
+                const list = document.getElementById('queue-cards-list');
+                const emptyMsg = document.getElementById('queue-empty-msg');
+
+                if (clips.length === 0) {
+                    emptyMsg.classList.remove('hidden');
+                    list.innerHTML = '';
+                    return;
+                }
+
+                emptyMsg.classList.add('hidden');
+                list.innerHTML = clips.map(c => {
+                    const hookL1 = (c.hook && c.hook[0]) ? c.hook[0] : 'VIRAL MOMENT';
+                    const hookL2 = (c.hook && c.hook[1]) ? c.hook[1] : 'WAIT FOR THE END!';
+                    const statusColors = {
+                        'pending': 'bg-slate-800 text-slate-300 border-slate-700',
+                        'ready': 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30',
+                        'uploading': 'bg-amber-500/20 text-amber-400 border-amber-500/30 animate-pulse',
+                        'uploaded': 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+                        'failed': 'bg-red-500/20 text-red-400 border-red-500/30'
+                    };
+                    const statusClass = statusColors[c.status] || statusColors['pending'];
+
+                    return `
+                    <div class="glass-card rounded-xl p-4 flex flex-col justify-between space-y-3 border border-slate-800 hover:border-slate-700 transition">
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="px-2 py-0.5 rounded text-[11px] font-bold uppercase border ${statusClass}">
+                                    ${c.status}
+                                </span>
+                                <span class="text-xs text-slate-400 code-font">
+                                    <i class="fa-regular fa-clock mr-1"></i>${c.duration}s (${Math.floor(c.start_sec/60)}m ${c.start_sec%60}s)
+                                </span>
+                            </div>
+
+                            <!-- Hook Banner Card -->
+                            <div class="bg-black/60 rounded-lg p-2.5 text-center border border-slate-800 my-2">
+                                <div class="text-xs font-black text-white tracking-wide">${hookL1}</div>
+                                <div class="text-[11px] font-black text-yellow-400 tracking-wide">${hookL2}</div>
+                            </div>
+
+                            <h4 class="text-sm font-bold text-white line-clamp-2 leading-snug">${c.title}</h4>
+                            <p class="text-[11px] text-slate-400 mt-1 line-clamp-1">From: ${c.source_title}</p>
+                        </div>
+
+                        <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between">
+                            ${c.youtube_url ? `
+                                <a href="${c.youtube_url}" target="_blank" class="text-xs text-red-400 hover:text-red-300 font-semibold flex items-center gap-1">
+                                    <i class="fa-brands fa-youtube"></i> Watch Short
+                                </a>
+                            ` : `
+                                <button onclick="uploadClip('${c.id}')" class="px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-xs font-bold text-white transition">
+                                    <i class="fa-solid fa-cloud-arrow-up mr-1"></i> Upload Now
+                                </button>
+                            `}
+
+                            <button onclick="deleteClip('${c.id}')" class="text-xs text-slate-500 hover:text-red-400 p-1 transition" title="Delete Clip">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </div>
+                    `;
+                }).join('');
+
+            } catch (e) {}
+        }
+
+        async function refreshHistory() {
+            try {
+                const res = await fetch('/api/history');
+                const history = await res.json();
+                const tableContainer = document.getElementById('history-table-container');
+                const emptyMsg = document.getElementById('history-empty-msg');
+                const tbody = document.getElementById('history-table-body');
+
+                if (!history || history.length === 0) {
+                    tableContainer.classList.add('hidden');
+                    emptyMsg.classList.remove('hidden');
+                    return;
+                }
+
+                emptyMsg.classList.add('hidden');
+                tableContainer.classList.remove('hidden');
+                tbody.innerHTML = history.slice().reverse().map(h => `
+                    <tr class="hover:bg-slate-800/30 transition">
+                        <td class="py-2.5 px-4 text-slate-400 code-font">${h.timestamp ? h.timestamp.split('T')[0] : 'Recent'}</td>
+                        <td class="py-2.5 px-4 text-white font-semibold">${h.title}</td>
+                        <td class="py-2.5 px-4 text-yellow-400 font-bold">${h.hook || '-'}</td>
+                        <td class="py-2.5 px-4">
+                            ${h.youtube_url ? `<a href="${h.youtube_url}" target="_blank" class="text-red-400 hover:text-red-300 font-bold"><i class="fa-brands fa-youtube mr-1"></i>Watch</a>` : '<span class="text-slate-500">Local</span>'}
+                        </td>
+                    </tr>
+                `).join('');
+
+            } catch (e) {}
+        }
+
+        async function refreshLogs() {
+            try {
+                const res = await fetch('/api/logs');
+                const data = await res.json();
+                const box = document.getElementById('terminal-box');
+                if (data.logs && data.logs.length > 0) {
+                    box.innerHTML = data.logs.map(l => `<div>${l}</div>`).join('');
+                    box.scrollTop = box.scrollHeight;
+                }
+            } catch (e) {}
+        }
+
+        // Auto polling every 3 seconds
+        setInterval(() => {
+            refreshStatus();
+            if (currentTab === 'queue') refreshQueue();
+            if (currentTab === 'logs') refreshLogs();
+        }, 3000);
+
+        // Initial Load
+        refreshStatus();
+        refreshQueue();
+    </script>
+</body>
+</html>
